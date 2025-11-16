@@ -1,0 +1,120 @@
+import { Player, Drill, Skill, RecruitingTask } from './types';
+
+const recruitingTimeline: RecruitingTask[] = [
+  // Freshman
+  { id: 'f1', year: 'Freshman', title: 'Create a Target List of Schools', description: 'Research 20-30 schools you are interested in academically and athletically.', status: 'completed' },
+  { id: 'f2', year: 'Freshman', title: 'Film Highlight Video', description: 'Create a 2-3 minute video showcasing your best plays.', status: 'completed' },
+  { id: 'f3', year: 'Freshman', title: 'Contact College Coaches', description: 'Send introductory emails to coaches on your target list.', status: 'pending' },
+  // Sophomore
+  { id: 's1', year: 'Sophomore', title: 'Update Highlight Video', description: 'Add new clips from your most recent season.', status: 'completed' },
+  { id: 's2', year: 'Sophomore', title: 'Attend Summer Camps', description: 'Go to camps at schools you are highly interested in.', status: 'pending' },
+  { id: 's3', year: 'Sophomore', title: 'Take Unofficial Visits', description: 'Visit a few local schools to see the campus and meet the team.', status: 'pending' },
+  // Junior
+  { id: 'j1', year: 'Junior', title: 'Register with NCAA/NAIA', description: 'Complete eligibility center registration.', status: 'pending' },
+  { id: 'j2', year: 'Junior', title: 'Take SAT/ACT', description: 'Take your standardized tests and send scores to schools.', status: 'pending' },
+  { id: 'j3', year: 'Junior', title: 'Follow Up with Coaches', description: 'Maintain regular contact with coaches showing interest.', status: 'pending' },
+  // Senior
+  { id: 'se1', year: 'Senior', title: 'Go on Official Visits', description: 'Schedule and attend official visits to your top schools.', status: 'pending' },
+  { id: 'se2', year: 'Senior', title: 'Apply to Schools', description: 'Complete applications for your top 5-7 schools.', status: 'pending' },
+  { id: 'se3', year: 'Senior', title: 'Sign National Letter of Intent', description: 'Commit to a school and sign your NLI.', status: 'pending' },
+];
+
+export const players: Player[] = [
+  {
+    id: 1,
+    name: 'Alex Morgan',
+    avatarUrl: 'https://i.pravatar.cc/150?u=alexmorgan',
+    position: 'Outside Hitter',
+    team: 'Vision 17U Gold',
+    gradYear: 2025,
+    profileUrl: '#',
+    gpa: 3.8,
+    satScore: 1350,
+    honors: 'National Honor Society, AP Scholar',
+    stats: [
+      { skill: Skill.Hitting, value: 92 },
+      { skill: Skill.Serving, value: 88 },
+      { skill: Skill.Passing, value: 75 },
+      { skill: Skill.Blocking, value: 78 },
+      { skill: Skill.Setting, value: 60 },
+      { skill: Skill.Digging, value: 81 },
+    ],
+    recruitingTimeline: recruitingTimeline,
+  },
+  {
+    id: 2,
+    name: 'Jordan Lee',
+    avatarUrl: 'https://i.pravatar.cc/150?u=jordanlee',
+    position: 'Setter',
+    team: 'Vision 17U Gold',
+    gradYear: 2025,
+    profileUrl: '#',
+    gpa: 4.0,
+    actScore: 32,
+    honors: 'Principal\'s Honor Roll',
+    stats: [
+      { skill: Skill.Hitting, value: 70 },
+      { skill: Skill.Serving, value: 85 },
+      { skill: Skill.Passing, value: 82 },
+      { skill: Skill.Blocking, value: 75 },
+      { skill: Skill.Setting, value: 95 },
+      { skill: Skill.Digging, value: 88 },
+    ],
+    recruitingTimeline: [],
+  },
+   {
+    id: 3,
+    name: 'Casey Smith',
+    avatarUrl: 'https://i.pravatar.cc/150?u=caseysmith',
+    position: 'Libero',
+    team: 'Vision 16U Blue',
+    gradYear: 2026,
+    profileUrl: '#',
+    gpa: 3.9,
+    honors: 'Student Athlete Award',
+    stats: [
+      { skill: Skill.Hitting, value: 55 },
+      { skill: Skill.Serving, value: 80 },
+      { skill: Skill.Passing, value: 94 },
+      { skill: Skill.Blocking, value: 65 },
+      { skill: Skill.Setting, value: 75 },
+      { skill: Skill.Digging, value: 96 },
+    ],
+    recruitingTimeline: [],
+  },
+   {
+    id: 4,
+    name: 'Riley Johnson',
+    avatarUrl: 'https://i.pravatar.cc/150?u=rileyjohnson',
+    position: 'Middle Blocker',
+    team: 'Vision 18U Gold',
+    gradYear: 2024,
+    profileUrl: '#',
+    gpa: 3.5,
+    satScore: 1280,
+    stats: [
+      { skill: Skill.Hitting, value: 89 },
+      { skill: Skill.Serving, value: 78 },
+      { skill: Skill.Passing, value: 68 },
+      { skill: Skill.Blocking, value: 97 },
+      { skill: Skill.Setting, value: 50 },
+      { skill: Skill.Digging, value: 72 },
+    ],
+    recruitingTimeline: [],
+  }
+];
+
+export const drills: Drill[] = [
+  { id: 1, name: 'Approach and Hit', description: 'Practice footwork and timing for hitting.', skill: Skill.Hitting },
+  { id: 2, name: 'Cross-Court Shots', description: 'Focus on hitting to the deep corners.', skill: Skill.Hitting },
+  { id: 3, name: 'Jump Serve Practice', description: 'Work on tossing and contact for jump serves.', skill: Skill.Serving },
+  { id: 4, name: 'Serve to Zone', description: 'Practice serving to specific zones on the court.', skill: Skill.Serving },
+  { id: 5, name: 'Serve Receive Passing', description: 'Pass serves to a target.', skill: Skill.Passing },
+  { id: 6, name: 'Passing Patterns', description: 'Move to pass from different starting positions.', skill: Skill.Passing },
+  { id: 7, name: 'Block Jumps', description: 'Practice explosive vertical jumps at the net.', skill: Skill.Blocking },
+  { id: 8, name: 'Read and React Blocking', description: 'Read the setter and get in position to block.', skill: Skill.Blocking },
+  { id: 9, name: 'Setter Footwork', description: 'Move to the ball and get in position to set.', skill: Skill.Setting },
+  { id: 10, name: 'Target Setting', description: 'Set to specific locations (outside, middle, right-side).', skill: Skill.Setting },
+  { id: 11, name: 'Defensive Scramble', description: 'React to unpredictable hits and keep the ball alive.', skill: Skill.Digging },
+  { id: 12, name: 'Roll and Dig', description: 'Practice digging hard-driven balls with proper technique.', skill: Skill.Digging },
+];
