@@ -4,15 +4,17 @@ import Leaderboard from './Leaderboard';
 import DevelopmentPlan from './DevelopmentPlan';
 import RecruitmentPlanner from './RecruitmentPlanner';
 import CollegeSearch from './CollegeSearch';
+import RunDrill from './RunDrill';
 import { players, drills } from '../data';
 import type { Player } from '../types';
 
 const AthleteDashboard: React.FC = () => {
-  const [activePlayer] = useState<Player>(players[0]);
+  const [activePlayer, setActivePlayer] = useState<Player>(players[0]);
   const [activeTab, setActiveTab] = useState('overview');
 
   const tabs = [
     { id: 'overview', label: 'Player Overview' },
+    { id: 'run-drill', label: 'Run Drill' },
     { id: 'development', label: 'AI Development' },
     { id: 'recruiting', label: 'Recruiting' },
     { id: 'colleges', label: 'College Search' },
@@ -49,6 +51,14 @@ const AthleteDashboard: React.FC = () => {
             <Leaderboard players={players} />
           </div>
         </div>
+      </div>
+
+      <div className={activeTab === 'run-drill' ? 'block' : 'hidden'}>
+        <RunDrill
+          player={activePlayer}
+          drills={drills}
+          onUpdatePlayer={setActivePlayer}
+        />
       </div>
 
       <div className={activeTab === 'development' ? 'block' : 'hidden'}>
