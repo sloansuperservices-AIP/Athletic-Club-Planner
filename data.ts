@@ -40,6 +40,12 @@ export const players: Player[] = [
       { skill: Skill.Digging, value: 81 },
     ],
     recruitingTimeline: recruitingTimeline,
+    drillHistory: [
+      { id: '1', drillId: 13, date: '2023-10-01T10:00:00Z', value: 24.5, unit: 'inches' },
+      { id: '2', drillId: 13, date: '2023-10-15T10:00:00Z', value: 25.0, unit: 'inches' },
+      { id: '3', drillId: 13, date: '2023-11-01T10:00:00Z', value: 25.2, unit: 'inches' },
+      { id: '4', drillId: 13, date: '2023-11-15T10:00:00Z', value: 25.8, unit: 'inches' },
+    ],
   },
   {
     id: 2,
@@ -61,6 +67,7 @@ export const players: Player[] = [
       { skill: Skill.Digging, value: 88 },
     ],
     recruitingTimeline: [],
+    drillHistory: [],
   },
    {
     id: 3,
@@ -81,6 +88,7 @@ export const players: Player[] = [
       { skill: Skill.Digging, value: 96 },
     ],
     recruitingTimeline: [],
+    drillHistory: [],
   },
    {
     id: 4,
@@ -101,6 +109,7 @@ export const players: Player[] = [
       { skill: Skill.Digging, value: 72 },
     ],
     recruitingTimeline: [],
+    drillHistory: [],
   }
 ];
 
@@ -117,4 +126,5 @@ export const drills: Drill[] = [
   { id: 10, name: 'Target Setting', description: 'Set to specific locations (outside, middle, right-side).', skill: Skill.Setting },
   { id: 11, name: 'Defensive Scramble', description: 'React to unpredictable hits and keep the ball alive.', skill: Skill.Digging },
   { id: 12, name: 'Roll and Dig', description: 'Practice digging hard-driven balls with proper technique.', skill: Skill.Digging },
+  { id: 13, name: 'Vertical', description: 'Measure your vertical jump height.', skill: Skill.Blocking, unit: 'inches' },
 ];
