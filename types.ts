@@ -36,7 +36,6 @@ export interface Player {
   honors?: string;
   stats: Stat[];
   recruitingTimeline: RecruitingTask[];
-  drillHistory?: DrillResult[];
 }
 
 export interface Drill {
@@ -44,15 +43,6 @@ export interface Drill {
   name: string;
   description: string;
   skill: Skill;
-  unit?: string;
-}
-
-export interface DrillResult {
-  id: string;
-  drillId: number;
-  date: string; // ISO string
-  value: number;
-  unit: string;
 }
 
 export interface FocusArea {
