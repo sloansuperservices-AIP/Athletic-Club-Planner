@@ -1,7 +1,7 @@
 import React from 'react';
 import AthleteDashboard from './AthleteDashboard';
 import CoachDashboard from './CoachDashboard';
-import type { UserRole } from '../App'; // Assuming UserRole is exported from App
+import type { UserRole } from '../types';
 
 interface DashboardProps {
   role: UserRole;
