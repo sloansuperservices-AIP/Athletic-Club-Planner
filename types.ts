@@ -7,6 +7,8 @@ export enum Skill {
   Digging = 'Digging',
 }
 
+export type UserRole = 'Athlete' | 'Coach';
+
 export interface Stat {
   skill: Skill;
   value: number;

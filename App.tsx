@@ -2,9 +2,7 @@
 import React, { useState } from 'react';
 import AthleteDashboard from './components/AthleteDashboard';
 import CoachDashboard from './components/CoachDashboard';
-
-// FIX: Export UserRole type to be used in other components.
-export type UserRole = 'Athlete' | 'Coach';
+import type { UserRole } from './types';
 
 const App: React.FC = () => {
   const [role, setRole] = useState<UserRole>('Athlete');
