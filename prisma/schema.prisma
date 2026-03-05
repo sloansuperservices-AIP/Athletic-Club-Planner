@@ -1,0 +1,443 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// AUTH & IDENTITY (NextAuth v5 compatible)
+// ============================================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+enum Role {
+  ADMIN
+  COACH
+  TEAM_MANAGER
+  PARENT
+  ATHLETE
+}
+
+// ============================================================
+// ORG & USER
+// ============================================================
+
+model Org {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  logoUrl   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users         User[]
+  teams         Team[]
+  tournaments   Tournament[]
+  sponsors      Sponsor[]
+  articles      KnowledgeArticle[]
+  announcements Announcement[]
+  jobs          WorkPlayJob[]
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  orgId String?
+  org   Org?    @relation(fields: [orgId], references: [id])
+  role  Role    @default(ATHLETE)
+
+  accounts      Account[]
+  sessions      Session[]
+  memberships   Membership[]
+  athlete       Athlete?
+  guardianOf    Guardian[]
+  auditLogs     AuditLog[]
+  jobClaims     JobClaim[]
+  creditEntries CreditLedgerEntry[]
+  sentMessages  Message[]           @relation("SentMessages")
+  articles      KnowledgeArticle[]  @relation("ArticleAuthor")
+  announcements Announcement[]      @relation("AnnouncementAuthor")
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  userId    String
+  teamId    String
+  role      Role
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+}
+
+// ============================================================
+// TEAMS & ATHLETES
+// ============================================================
+
+model Team {
+  id        String   @id @default(cuid())
+  orgId     String
+  org       Org      @relation(fields: [orgId], references: [id])
+  name      String
+  ageGroup  String
+  division  String?
+  season    String
+  coachId   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members       Membership[]
+  athletes      Athlete[]
+  tournaments   TeamTournament[]
+  scheduleItems ScheduleItem[]
+  jobs          WorkPlayJob[]
+}
+
+model Athlete {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamId            String
+  team              Team      @relation(fields: [teamId], references: [id])
+  position          String
+  gradYear          Int
+  gpa               Float?
+  satScore          Int?
+  actScore          Int?
+  honors            String?
+  jerseyNumber      Int?
+  waiverSigned      Boolean   @default(false)
+  waiverSignedAt    DateTime?
+  medicalFormOnFile Boolean   @default(false)
+  profileImageUrl   String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  guardians    Guardian[]
+  stats        AthleteStat[]
+  drillResults DrillResult[]
+}
+
+model Guardian {
+  id           String  @id @default(cuid())
+  userId       String
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  athleteId    String
+  athlete      Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  relationship String  @default("Guardian")
+  isPrimary    Boolean @default(false)
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, athleteId])
+}
+
+model AthleteStat {
+  id         String   @id @default(cuid())
+  athleteId  String
+  athlete    Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  skill      String
+  value      Float
+  recordedAt DateTime @default(now())
+}
+
+model DrillResult {
+  id         String   @id @default(cuid())
+  athleteId  String
+  athlete    Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  drillName  String
+  skill      String
+  value      Float
+  unit       String
+  recordedAt DateTime @default(now())
+}
+
+model ScheduleItem {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  title     String
+  startAt   DateTime
+  endAt     DateTime
+  location  String?
+  type      String   @default("practice")
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+// ============================================================
+// TOURNAMENTS & READINESS
+// ============================================================
+
+model Tournament {
+  id                   String   @id @default(cuid())
+  orgId                String
+  org                  Org      @relation(fields: [orgId], references: [id])
+  name                 String
+  location             String
+  startDate            DateTime
+  endDate              DateTime
+  registrationDeadline DateTime?
+  hotelDeadline        DateTime?
+  rosterDeadline       DateTime?
+  sanctioningBody      String?
+  entryFee             Float?
+  notes                String?  @db.Text
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  teams TeamTournament[]
+  jobs  WorkPlayJob[]
+}
+
+model TeamTournament {
+  id           String     @id @default(cuid())
+  teamId       String
+  team         Team       @relation(fields: [teamId], references: [id])
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  notes        String?
+  createdAt    DateTime   @default(now())
+
+  checklist ChecklistItem[]
+
+  @@unique([teamId, tournamentId])
+}
+
+// Readiness checklist columns per team per tournament
+model ChecklistItem {
+  id               String         @id @default(cuid())
+  teamTournamentId String
+  teamTournament   TeamTournament @relation(fields: [teamTournamentId], references: [id], onDelete: Cascade)
+  column           String         // registration | hotel | rideshare | sponsor | roster | calendar | workplay
+  status           String         @default("pending") // pending | in_progress | complete
+  notes            String?        @db.Text
+  completedById    String?
+  completedAt      DateTime?
+  updatedAt        DateTime       @updatedAt
+
+  auditTrail AuditLog[] @relation("ChecklistAudit")
+
+  @@unique([teamTournamentId, column])
+}
+
+// ============================================================
+// WORKPLAY / DIBS JOB BOARD
+// ============================================================
+
+model WorkPlayJob {
+  id           String      @id @default(cuid())
+  orgId        String
+  org          Org         @relation(fields: [orgId], references: [id])
+  teamId       String?
+  team         Team?       @relation(fields: [teamId], references: [id])
+  tournamentId String?
+  tournament   Tournament? @relation(fields: [tournamentId], references: [id])
+  title        String
+  description  String      @db.Text
+  category     String      @default("general") // registration | line-judge | score | concessions | parking | hospitality | general
+  creditValue  Float       @default(1.0) // flat 1 credit per completion
+  startAt      DateTime?
+  endAt        DateTime?
+  durationMins Int?
+  maxVolunteers Int        @default(1)
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  slots JobSlot[]
+}
+
+model JobSlot {
+  id        String      @id @default(cuid())
+  jobId     String
+  job       WorkPlayJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  slotIndex Int         @default(1)
+
+  claim JobClaim?
+}
+
+model JobClaim {
+  id             String    @id @default(cuid())
+  slotId         String    @unique
+  slot           JobSlot   @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User      @relation(fields: [userId], references: [id])
+  claimedAt      DateTime  @default(now())
+  status         String    @default("claimed") // claimed | completed | no_show | released
+  releasedAt     DateTime?
+  releasedReason String?
+  adminOverride  Boolean   @default(false)
+
+  completion   JobCompletion?
+  creditEntry  CreditLedgerEntry?
+}
+
+model JobCompletion {
+  id           String   @id @default(cuid())
+  claimId      String   @unique
+  claim        JobClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  completedAt  DateTime @default(now())
+  verifiedById String?
+  notes        String?
+}
+
+// Source of truth for credits — never store a mutable balance
+model CreditLedgerEntry {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  claimId     String?   @unique
+  claim       JobClaim? @relation(fields: [claimId], references: [id])
+  amount      Float     // 1.0 earned, -1.0 no-show, any admin adjustment
+  reason      String    // job_completed | admin_adjustment | no_show_deduction
+  note        String?
+  createdAt   DateTime  @default(now())
+  createdById String?
+}
+
+// ============================================================
+// SPONSORS
+// ============================================================
+
+model Sponsor {
+  id            String   @id @default(cuid())
+  orgId         String
+  org           Org      @relation(fields: [orgId], references: [id])
+  name          String
+  tier          String   @default("bronze") // platinum | gold | silver | bronze
+  logoUrl       String?
+  website       String?
+  contactName   String?
+  contactEmail  String?
+  contractStart DateTime?
+  contractEnd   DateTime?
+  totalValue    Float?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  deliverables SponsorDeliverable[]
+}
+
+model SponsorDeliverable {
+  id          String   @id @default(cuid())
+  sponsorId   String
+  sponsor     Sponsor  @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  title       String
+  dueDate     DateTime?
+  status      String   @default("pending") // pending | delivered | overdue
+  notes       String?
+  completedAt DateTime?
+}
+
+// ============================================================
+// KNOWLEDGE BASE
+// ============================================================
+
+model KnowledgeArticle {
+  id          String   @id @default(cuid())
+  orgId       String
+  org         Org      @relation(fields: [orgId], references: [id])
+  title       String
+  content     String   @db.Text
+  category    String   @default("general") // rules | logistics | training | recruiting | faq | general
+  tags        String[]
+  authorId    String
+  author      User     @relation("ArticleAuthor", fields: [authorId], references: [id])
+  isPublished Boolean  @default(false)
+  viewCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ============================================================
+// COMMUNICATIONS
+// ============================================================
+
+model Announcement {
+  id           String    @id @default(cuid())
+  orgId        String
+  org          Org       @relation(fields: [orgId], references: [id])
+  title        String
+  body         String    @db.Text
+  targetTeamId String?
+  authorId     String
+  author       User      @relation("AnnouncementAuthor", fields: [authorId], references: [id])
+  publishedAt  DateTime?
+  expiresAt    DateTime?
+  isPinned     Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  recipientId String?
+  subject     String?
+  body        String   @db.Text
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+// ============================================================
+// AUDIT LOG
+// ============================================================
+
+model AuditLog {
+  id              String         @id @default(cuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  action          String         // checklist.updated | job.claimed | user.role_changed etc.
+  entityType      String         // ChecklistItem | JobClaim | User
+  entityId        String
+  oldValue        Json?
+  newValue        Json?
+  ip              String?
+  createdAt       DateTime       @default(now())
+
+  checklistItemId String?
+  checklistItem   ChecklistItem? @relation("ChecklistAudit", fields: [checklistItemId], references: [id])
+}
