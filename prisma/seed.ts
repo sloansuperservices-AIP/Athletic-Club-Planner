@@ -26,7 +26,7 @@ async function main() {
     create: {
       email: 'admin@midtnvball.com',
       name: 'Alex Admin',
-      hashedPassword: hashPassword('admin123!'),
+      passwordHash: hashPassword('admin123!'),
       role: Role.ADMIN,
       orgId: org.id,
     },
@@ -38,7 +38,7 @@ async function main() {
     create: {
       email: 'coach@midtnvball.com',
       name: 'Coach Rivera',
-      hashedPassword: hashPassword('coach123!'),
+      passwordHash: hashPassword('coach123!'),
       role: Role.COACH,
       orgId: org.id,
     },
@@ -50,7 +50,7 @@ async function main() {
     create: {
       email: 'coach2@midtnvball.com',
       name: 'Coach Thompson',
-      hashedPassword: hashPassword('coach123!'),
+      passwordHash: hashPassword('coach123!'),
       role: Role.COACH,
       orgId: org.id,
     },
@@ -62,7 +62,7 @@ async function main() {
     create: {
       email: 'parent@midtnvball.com',
       name: 'Jordan Parent',
-      hashedPassword: hashPassword('parent123!'),
+      passwordHash: hashPassword('parent123!'),
       role: Role.PARENT,
       orgId: org.id,
     },
@@ -74,7 +74,7 @@ async function main() {
     create: {
       email: 'parent2@midtnvball.com',
       name: 'Morgan Smith',
-      hashedPassword: hashPassword('parent123!'),
+      passwordHash: hashPassword('parent123!'),
       role: Role.PARENT,
       orgId: org.id,
     },
@@ -86,7 +86,7 @@ async function main() {
     create: {
       email: 'parent3@midtnvball.com',
       name: 'Casey Johnson',
-      hashedPassword: hashPassword('parent123!'),
+      passwordHash: hashPassword('parent123!'),
       role: Role.PARENT,
       orgId: org.id,
     },
@@ -596,19 +596,19 @@ Welcome to Mid TN Volleyball! Here's how to get started with the ops dashboard.
     {
       title: 'Spring Classic — Hotel Deadline in 7 Days',
       body: 'Reminder: the hotel block for Spring Classic closes in 7 days. Please book your rooms now using the group code on the tournament page.',
-      pinned: true,
+      isPinned: true,
       authorId: admin.id,
     },
     {
       title: 'WorkPlay Slots Now Open for Spring Classic',
       body: 'Volunteer slots for Spring Classic are now available on the WorkPlay page. Each family is expected to fill at least 2 slots. The DIBs system limits claims to 2 per week.',
-      pinned: false,
+      isPinned: false,
       authorId: coach1.id,
     },
     {
       title: 'Welcome to the New Ops Dashboard!',
       body: 'We have launched our new club operations dashboard. Use the Knowledge Base for help, and reach out to admin with any questions.',
-      pinned: false,
+      isPinned: false,
       authorId: admin.id,
     },
   ];

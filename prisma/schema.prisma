@@ -72,6 +72,10 @@ model Org {
   articles      KnowledgeArticle[]
   announcements Announcement[]
   jobs          WorkPlayJob[]
+  memberships   Membership[]
+  athletes      Athlete[]
+  auditLogs     AuditLog[]
+  jobClaims     JobClaim[]
 }
 
 model User {
@@ -91,24 +95,25 @@ model User {
   accounts      Account[]
   sessions      Session[]
   memberships   Membership[]
-  athlete       Athlete?
   guardianOf    Guardian[]
   auditLogs     AuditLog[]
   jobClaims     JobClaim[]
   creditEntries CreditLedgerEntry[]
-  sentMessages  Message[]           @relation("SentMessages")
-  articles      KnowledgeArticle[]  @relation("ArticleAuthor")
-  announcements Announcement[]      @relation("AnnouncementAuthor")
+  sentMessages  Message[]            @relation("SentMessages")
+  articles      KnowledgeArticle[]   @relation("ArticleAuthor")
+  announcements Announcement[]       @relation("AnnouncementAuthor")
 }
 
 model Membership {
   id        String   @id @default(cuid())
   userId    String
   teamId    String
-  role      Role
+  orgId     String
+  teamRole  String   @default("MEMBER") // HEAD_COACH | ASST_COACH | TEAM_MANAGER | PARENT | ATHLETE
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  org       Org      @relation(fields: [orgId], references: [id])
 
   @@unique([userId, teamId])
 }
@@ -118,57 +123,62 @@ model Membership {
 // ============================================================
 
 model Team {
-  id        String   @id @default(cuid())
-  orgId     String
-  org       Org      @relation(fields: [orgId], references: [id])
-  name      String
-  ageGroup  String
-  division  String?
-  season    String
-  coachId   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  orgId       String
+  org         Org      @relation(fields: [orgId], references: [id])
+  name        String
+  slug        String
+  ageGroup    String
+  level       String?  // Gold | Blue | Silver
+  headCoachId String?
+  season      String?
+  division    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   members       Membership[]
   athletes      Athlete[]
   tournaments   TeamTournament[]
   scheduleItems ScheduleItem[]
   jobs          WorkPlayJob[]
+
+  @@unique([orgId, slug])
 }
 
 model Athlete {
-  id                String    @id @default(cuid())
-  userId            String    @unique
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  teamId            String
-  team              Team      @relation(fields: [teamId], references: [id])
-  position          String
-  gradYear          Int
-  gpa               Float?
-  satScore          Int?
-  actScore          Int?
-  honors            String?
-  jerseyNumber      Int?
-  waiverSigned      Boolean   @default(false)
-  waiverSignedAt    DateTime?
-  medicalFormOnFile Boolean   @default(false)
-  profileImageUrl   String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id                  String    @id @default(cuid())
+  orgId               String
+  org                 Org       @relation(fields: [orgId], references: [id])
+  teamId              String
+  team                Team      @relation(fields: [teamId], references: [id])
+  firstName           String
+  lastName            String
+  jerseyNumber        String?
+  position            String?
+  gradYear            Int?
+  gpa                 Float?
+  photoUrl            String?
+  waiverSigned        Boolean   @default(false)
+  waiverSignedAt      DateTime?
+  medicalFormComplete Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
-  guardians    Guardian[]
-  stats        AthleteStat[]
-  drillResults DrillResult[]
+  guardians Guardian[]
+  stats     AthleteStat[]
+  rsvps     Rsvp[]
+
+  @@unique([teamId, jerseyNumber])
 }
 
 model Guardian {
-  id           String  @id @default(cuid())
+  id           String   @id @default(cuid())
   userId       String
-  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   athleteId    String
-  athlete      Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
-  relationship String  @default("Guardian")
-  isPrimary    Boolean @default(false)
+  athlete      Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  relationship String   @default("Guardian")
+  isPrimary    Boolean  @default(false)
   createdAt    DateTime @default(now())
 
   @@unique([userId, athleteId])
@@ -180,17 +190,7 @@ model AthleteStat {
   athlete    Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
   skill      String
   value      Float
-  recordedAt DateTime @default(now())
-}
-
-model DrillResult {
-  id         String   @id @default(cuid())
-  athleteId  String
-  athlete    Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
-  drillName  String
-  skill      String
-  value      Float
-  unit       String
+  unit       String?
   recordedAt DateTime @default(now())
 }
 
@@ -199,12 +199,34 @@ model ScheduleItem {
   teamId    String
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   title     String
+  type      String   @default("PRACTICE") // PRACTICE | GAME | TOURNAMENT | MEETING | OTHER
   startAt   DateTime
   endAt     DateTime
   location  String?
-  type      String   @default("practice")
-  notes     String?
+  notes     String?  @db.Text
+  // Live scoring
+  homeScore Int?
+  awayScore Int?
+  opponent  String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rsvps Rsvp[]
+}
+
+// RSVP for schedule items
+model Rsvp {
+  id             String       @id @default(cuid())
+  scheduleItemId String
+  scheduleItem   ScheduleItem @relation(fields: [scheduleItemId], references: [id], onDelete: Cascade)
+  athleteId      String
+  athlete        Athlete      @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  status         String       @default("PENDING") // YES | NO | MAYBE | PENDING
+  note           String?
+  respondedAt    DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@unique([scheduleItemId, athleteId])
 }
 
 // ============================================================
@@ -212,11 +234,14 @@ model ScheduleItem {
 // ============================================================
 
 model Tournament {
-  id                   String   @id @default(cuid())
+  id                   String    @id @default(cuid())
   orgId                String
-  org                  Org      @relation(fields: [orgId], references: [id])
+  org                  Org       @relation(fields: [orgId], references: [id])
   name                 String
-  location             String
+  slug                 String
+  venue                String?
+  city                 String?
+  state                String?
   startDate            DateTime
   endDate              DateTime
   registrationDeadline DateTime?
@@ -224,12 +249,14 @@ model Tournament {
   rosterDeadline       DateTime?
   sanctioningBody      String?
   entryFee             Float?
-  notes                String?  @db.Text
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  notes                String?   @db.Text
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   teams TeamTournament[]
   jobs  WorkPlayJob[]
+
+  @@unique([orgId, slug])
 }
 
 model TeamTournament {
@@ -246,13 +273,12 @@ model TeamTournament {
   @@unique([teamId, tournamentId])
 }
 
-// Readiness checklist columns per team per tournament
 model ChecklistItem {
   id               String         @id @default(cuid())
   teamTournamentId String
   teamTournament   TeamTournament @relation(fields: [teamTournamentId], references: [id], onDelete: Cascade)
-  column           String         // registration | hotel | rideshare | sponsor | roster | calendar | workplay
-  status           String         @default("pending") // pending | in_progress | complete
+  column           String         // REGISTRATION | ROSTER | HOTEL | CALENDAR | WORKPLAY | RIDESHARE | SPONSOR
+  status           String         @default("TODO") // TODO | IN_PROGRESS | DONE | NA
   notes            String?        @db.Text
   completedById    String?
   completedAt      DateTime?
@@ -277,13 +303,10 @@ model WorkPlayJob {
   tournament   Tournament? @relation(fields: [tournamentId], references: [id])
   title        String
   description  String      @db.Text
-  category     String      @default("general") // registration | line-judge | score | concessions | parking | hospitality | general
-  creditValue  Float       @default(1.0) // flat 1 credit per completion
-  startAt      DateTime?
-  endAt        DateTime?
-  durationMins Int?
-  maxVolunteers Int        @default(1)
+  category     String      @default("GENERAL") // EVENT | MEDIA | FUNDRAISING | LOGISTICS | GENERAL
+  pointValue   Float       @default(1.0)
   isActive     Boolean     @default(true)
+  createdById  String?
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
@@ -291,51 +314,56 @@ model WorkPlayJob {
 }
 
 model JobSlot {
-  id        String      @id @default(cuid())
-  jobId     String
-  job       WorkPlayJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  slotIndex Int         @default(1)
+  id          String      @id @default(cuid())
+  jobId       String
+  job         WorkPlayJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  label       String      @default("Slot 1")
+  claimedById String?
+  claimedAt   DateTime?
+  createdAt   DateTime    @default(now())
 
-  claim JobClaim?
+  claim      JobClaim?
+  completion JobCompletion?
 }
 
 model JobClaim {
-  id             String    @id @default(cuid())
-  slotId         String    @unique
-  slot           JobSlot   @relation(fields: [slotId], references: [id], onDelete: Cascade)
-  userId         String
-  user           User      @relation(fields: [userId], references: [id])
-  claimedAt      DateTime  @default(now())
-  status         String    @default("claimed") // claimed | completed | no_show | released
-  releasedAt     DateTime?
-  releasedReason String?
-  adminOverride  Boolean   @default(false)
+  id            String    @id @default(cuid())
+  slotId        String    @unique
+  slot          JobSlot   @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  orgId         String
+  org           Org       @relation(fields: [orgId], references: [id])
+  claimedAt     DateTime  @default(now())
+  status        String    @default("CLAIMED") // CLAIMED | COMPLETED | RELEASED | NO_SHOW
+  adminOverride Boolean   @default(false)
+  releasedAt    DateTime?
 
-  completion   JobCompletion?
-  creditEntry  CreditLedgerEntry?
+  creditEntry CreditLedgerEntry?
+
+  @@unique([userId, slotId])
 }
 
 model JobCompletion {
   id           String   @id @default(cuid())
-  claimId      String   @unique
-  claim        JobClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  slotId       String   @unique
+  slot         JobSlot  @relation(fields: [slotId], references: [id], onDelete: Cascade)
   completedAt  DateTime @default(now())
   verifiedById String?
   notes        String?
 }
 
-// Source of truth for credits — never store a mutable balance
+// Immutable ledger — never a mutable balance field
 model CreditLedgerEntry {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id])
-  claimId     String?   @unique
-  claim       JobClaim? @relation(fields: [claimId], references: [id])
-  amount      Float     // 1.0 earned, -1.0 no-show, any admin adjustment
-  reason      String    // job_completed | admin_adjustment | no_show_deduction
-  note        String?
-  createdAt   DateTime  @default(now())
-  createdById String?
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id])
+  claimId          String?   @unique
+  claim            JobClaim? @relation(fields: [claimId], references: [id])
+  amount           Float     // 1.0 earned | negative = deduction
+  reason           String
+  adminGrantedById String?
+  createdAt        DateTime  @default(now())
 }
 
 // ============================================================
@@ -343,33 +371,33 @@ model CreditLedgerEntry {
 // ============================================================
 
 model Sponsor {
-  id            String   @id @default(cuid())
-  orgId         String
-  org           Org      @relation(fields: [orgId], references: [id])
-  name          String
-  tier          String   @default("bronze") // platinum | gold | silver | bronze
-  logoUrl       String?
-  website       String?
-  contactName   String?
-  contactEmail  String?
-  contractStart DateTime?
-  contractEnd   DateTime?
-  totalValue    Float?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String   @id @default(cuid())
+  orgId        String
+  org          Org      @relation(fields: [orgId], references: [id])
+  name         String
+  tierName     String?  // Platinum | Gold | Silver | Bronze
+  amount       Float?
+  status       String   @default("PROSPECT") // PROSPECT | ACTIVE | LAPSED | DECLINED
+  logoUrl      String?
+  website      String?
+  contactName  String?
+  contactEmail String?
+  contactPhone String?
+  notes        String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   deliverables SponsorDeliverable[]
 }
 
 model SponsorDeliverable {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   sponsorId   String
-  sponsor     Sponsor  @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
-  title       String
+  sponsor     Sponsor   @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  description String
   dueDate     DateTime?
-  status      String   @default("pending") // pending | delivered | overdue
-  notes       String?
   completedAt DateTime?
+  notes       String?
 }
 
 // ============================================================
@@ -377,19 +405,19 @@ model SponsorDeliverable {
 // ============================================================
 
 model KnowledgeArticle {
-  id          String   @id @default(cuid())
-  orgId       String
-  org         Org      @relation(fields: [orgId], references: [id])
-  title       String
-  content     String   @db.Text
-  category    String   @default("general") // rules | logistics | training | recruiting | faq | general
-  tags        String[]
-  authorId    String
-  author      User     @relation("ArticleAuthor", fields: [authorId], references: [id])
-  isPublished Boolean  @default(false)
-  viewCount   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  orgId     String
+  org       Org      @relation(fields: [orgId], references: [id])
+  title     String
+  content   String   @db.Text
+  category  String   @default("GENERAL")
+  tags      String[]
+  authorId  String
+  author    User     @relation("ArticleAuthor", fields: [authorId], references: [id])
+  published Boolean  @default(false)
+  viewCount Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ============================================================
@@ -405,9 +433,8 @@ model Announcement {
   targetTeamId String?
   authorId     String
   author       User      @relation("AnnouncementAuthor", fields: [authorId], references: [id])
-  publishedAt  DateTime?
-  expiresAt    DateTime?
   isPinned     Boolean   @default(false)
+  expiresAt    DateTime?
   createdAt    DateTime  @default(now())
 }
 
@@ -427,16 +454,18 @@ model Message {
 // ============================================================
 
 model AuditLog {
-  id              String         @id @default(cuid())
-  userId          String
-  user            User           @relation(fields: [userId], references: [id])
-  action          String         // checklist.updated | job.claimed | user.role_changed etc.
-  entityType      String         // ChecklistItem | JobClaim | User
-  entityId        String
-  oldValue        Json?
-  newValue        Json?
-  ip              String?
-  createdAt       DateTime       @default(now())
+  id            String         @id @default(cuid())
+  orgId         String
+  org           Org            @relation(fields: [orgId], references: [id])
+  userId        String
+  user          User           @relation(fields: [userId], references: [id])
+  action        String
+  entityType    String
+  entityId      String?
+  oldValue      String?
+  newValue      String?
+  ip            String?
+  createdAt     DateTime       @default(now())
 
   checklistItemId String?
   checklistItem   ChecklistItem? @relation("ChecklistAudit", fields: [checklistItemId], references: [id])
