@@ -11,11 +11,12 @@ import {
   BookOpen,
   Megaphone,
   HandCoins,
-  Settings,
   LogOut,
   ChevronLeft,
   ChevronRight,
   Shield,
+  CalendarCheck,
+  CreditCard,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Role } from '@prisma/client'
@@ -34,10 +35,12 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Command Center', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Tournaments', href: '/dashboard/tournaments', icon: Trophy },
   { label: 'Teams', href: '/dashboard/teams', icon: Users },
+  { label: 'Attendance & Scores', href: '/dashboard/attendance', icon: CalendarCheck },
   { label: 'WorkPlay & DIBs', href: '/dashboard/workplay', icon: Briefcase },
+  { label: 'Payments & Fees', href: '/dashboard/payments', icon: CreditCard, checkPerm: CAN.viewSponsors },
   { label: 'Knowledge Base', href: '/dashboard/knowledge', icon: BookOpen },
-  { label: 'Sponsors', href: '/dashboard/sponsors', icon: HandCoins, checkPerm: CAN.viewSponsors },
   { label: 'Comms', href: '/dashboard/comms', icon: Megaphone },
+  { label: 'Sponsors', href: '/dashboard/sponsors', icon: HandCoins, checkPerm: CAN.viewSponsors },
   { label: 'Admin', href: '/dashboard/admin', icon: Shield, checkPerm: CAN.manageUsers },
 ]
 
